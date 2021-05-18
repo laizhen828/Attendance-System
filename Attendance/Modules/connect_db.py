@@ -4,6 +4,7 @@ import sqlalchemy as db
 from sqlalchemy.inspection import inspect
 from sqlalchemy_utils import database_exists, create_database
 from colorama import Fore, Style, Back
+from werkzeug.security import generate_password_hash, check_password_hash
 colorama.init(autoreset=True)
 metadata = db.MetaData()
 attendance = db.Table(
@@ -27,7 +28,7 @@ employee = db.Table(
     db.Column('shift', db.String(20), db.ForeignKey('shift.shift')),
     db.Column('nationality', db.String(20))
 )
-user = db.Table(
+User = db.Table(
     'user', metadata,
     db.Column('username', db.String(20), primary_key=True, unique=True),
     db.Column('name', db.String(30)),
@@ -75,11 +76,52 @@ def connect_db(ip, port, user, password, db_name):
                 for column in inspector.get_columns(table_name):
                     print(str(column['name']))
                 print(" ")
-            print("Proceeding to Main Menu...")
+            print("Creating Default Admin Account...")
+            print("Username: " + Fore.LIGHTYELLOW_EX + "admin")
+            print("Password: " + Fore.LIGHTYELLOW_EX + "admin")
+            query = db.insert(User).values(
+                username="admin",
+                name="admin",
+                email="admin@admin.com",
+                password=generate_password_hash("admin",method='SHA256')
+            )
+            print("Attempt to Update Database Table...")
+            from .add import db_execute
+            db_execute(engine, query)
+            print("Proceeding to Authentication...")
             return
         else:
             print("Database Schema (" + Fore.CYAN + db_name + Fore.RESET + ") already exists!")
-            print("Proceeding to Main Menu...")
+            print("Proceeding to Authentication...")
             return
     except:
         print(f"Unable to connect to MySQL Database on ({ip}:{port})")
+
+def authentication(sqlcred):
+    db_url = 'mysql://' + sqlcred["user"] + ':' + sqlcred["password"] + '@' + sqlcred["ip"] + ':' + sqlcred["port"] + '/' + sqlcred["db_name"]
+    engine = db.create_engine(db_url)
+    while True:
+        try:
+            print(" ")
+            print("[Login]")
+            username = input("Username: ")
+            password = input("Password: ")
+            authentication_query = db.select([User]).where(User.columns.username == username)
+            username_exists = engine.connect().execute(authentication_query).fetchone()
+            username_check = username_exists[0]
+            password_check = username_exists[3]
+            if username_exists:
+                if check_password_hash(password_check, password):
+                    print(Fore.LIGHTGREEN_EX + "Login Successful")
+                    print("Proceeding to Main Menu...")
+                    print(" ")
+                    return "Authenticated", username
+                else:
+                    print(Fore.LIGHTRED_EX + "Authentication Failed")
+                    return "Unauthenticated"
+            else:
+                print(Fore.LIGHTRED_EX + "Authentication Failed")
+                return "Unauthenticated"
+        except:
+            print(Fore.LIGHTRED_EX + "Authentication Failed")
+            return "Unauthenticated"

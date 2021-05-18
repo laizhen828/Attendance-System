@@ -1,4 +1,5 @@
 import os
+import sys
 import colorama
 import configparser
 import socket
@@ -9,10 +10,10 @@ from .connect_db import connect_db
 
 def check_conf():
     prompt_installation_msg = "Please Select Installation Method (" + Fore.GREEN + "1" + Fore.RESET + "/" + Fore.LIGHTRED_EX + "2" + Fore.RESET + "): "
-    if os.path.exists("config.cfg"):
+    if os.path.exists("config.ini"):
         try:
             print("Config File Exists. " + Fore.GREEN + "[OK]")
-            config.read("config.cfg")
+            config.read("config.ini")
             ip = config.get('Configurations', 'mysql_ip')
             port = config.get('Configurations', 'mysql_port')
             user = config.get('Configurations', 'mysql_user')
@@ -59,9 +60,27 @@ def check_conf():
             Configurations['mysql_password'] = 'rfid12345'
             print("Using default values for Mysql Database Name (" + Fore.YELLOW + "rfid" + Fore.RESET + ")")
             Configurations['mysql_db_name'] = 'rfid'
+
+            #setting up default parameters
+            config['Parameters'] = {}
+            Parameters = config['Parameters']
+            Parameters['Employee Departments'] = 'Not Set'
+            Parameters['Employee ID Length'] = '20'
+            Parameters['Employee Nationalities'] = "['Malaysian', 'Singaporean', 'Others']"
+            Parameters['Card ID Length'] = '10'
+            Parameters['Scanner ID Length'] = '20'
+            Parameters['Scanner Locations'] = 'Not Set'
+            Parameters['Date Format'] = "%%d-%%m-%%Y"
+            Parameters['Time Format'] = "%%H:%%M:%%S"
+
+            #setting up static values
+            config['Static'] = {}
+            Static = config['Static']
+            Static['Months'] = "['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun' ,'Jul','Aug', 'Sep', 'Oct', 'Nov', 'Dec']"
+
         elif setup_option == "N" or setup_option == "n":
             pass
-        with open("config.cfg", "a") as f:
+        with open("config.ini", "a") as f:
             config.write(f)
         f.close()
         return check_conf()
