@@ -1,1 +1,3 @@
-18/5/2021 - 5:16pm: Updated changable parameters to key in options but still not functionable, fixing needed. Might need to change to Database (MySQL).
+18/5/2021 - 5:16pm:
+  Updated changable parameters to key in options but still not functionable, fixing needed. Might need to change to Database (MySQL).
+  Updated login authentication before performing any action. (Default credentials upon setup: username=admin, password=admin.)
